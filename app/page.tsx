@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Wallet, TrendingUp, TrendingDown, CreditCard, Building2, Plus, Minus, Home as HomeIcon, Receipt, Briefcase, Gem, Moon, Sun, X, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, CreditCard, Building2, Plus, Minus, Home as HomeIcon, Receipt, Briefcase, Gem, Moon, Sun, X, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 type Account = { id: number; name: string; type: string; balance: number };
 type Category = { id: number; name: string; type: string };
@@ -9,7 +10,7 @@ type Transaction = { id: number; amount: number; type: string; category_name?: s
 type Asset = { id: number; name: string; value: number; type: string };
 
 export default function Home() {
-  const [tab, setTab] = useState<'dashboard' | 'transactions' | 'accounts' | 'assets'>('dashboard');
+  const [tab, setTab] = useState<'dashboard' | 'transactions' | 'accounts' | 'assets' | 'chart'>('dashboard');
   const [user, setUser] = useState<{ name: string } | null>(null);
   const [showSetup, setShowSetup] = useState(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -20,11 +21,12 @@ export default function Home() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showAddTx, setShowAddTx] = useState(false);
-  const [txType, setTxType] = useState<'income' | 'expense' | 'transfer'>('expense');
+  const [txType, setTxType] = useState<'income' | 'expense'>('expense');
   const [showAddAccount, setShowAddAccount] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showAddAsset, setShowAddAsset] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [setupStep, setSetupStep] = useState(1);
 
   useEffect(() => {
     const isDark = localStorage.getItem('darkMode') === 'true';
@@ -69,12 +71,12 @@ export default function Home() {
 
   const saveUser = async (name: string) => {
     await fetch('/api/user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
-    setShowSetup(false);
-    loadData();
+    setSetupStep(2);
   };
 
   const addAccount = async (name: string, type: string, balance: number) => {
     await fetch('/api/accounts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, type, balance }) });
+    setShowAddAccount(false);
     loadData();
   };
 
@@ -86,11 +88,13 @@ export default function Home() {
 
   const addAsset = async (name: string, value: number, type: string) => {
     await fetch('/api/assets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, value, type }) });
+    setShowAddAsset(false);
     loadData();
   };
 
   const addCategory = async (name: string, type: 'income' | 'expense') => {
     await fetch('/api/categories', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, type }) });
+    setShowAddCategory(false);
     loadData();
   };
 
@@ -101,12 +105,12 @@ export default function Home() {
     }
   };
 
-  const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
-  const totalAssets = assets.reduce((sum, asset) => sum + asset.value, 0);
+  const totalBalance = accounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
+  const totalAssets = assets.reduce((sum, asset) => sum + Number(asset.value), 0);
   const netWorth = totalBalance + totalAssets;
 
   if (showSetup) {
-    return <SetupScreen onSave={saveUser} onAddAccount={addAccount} onComplete={() => loadData()} />;
+    return <SetupScreen step={setupStep} onSave={saveUser} onAddAccount={(name: string, type: string, balance: number) => { addAccount(name, type, balance); setShowSetup(false); loadData(); }} showAddAccount={showAddAccount} setShowAddAccount={setShowAddAccount} onSkip={() => { setShowSetup(false); loadData(); }} />;
   }
 
   return (
@@ -172,6 +176,46 @@ export default function Home() {
           </div>
         )}
 
+        {tab === 'chart' && (
+          <div className="space-y-5">
+            <div className="glass-card rounded-2xl p-6 shadow-lg dark:border dark:border-gray-800">
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4">Monthly Overview</h3>
+              <div className="flex items-center justify-between mb-4">
+                <button onClick={() => { const d = new Date(selectedYear, selectedMonth - 2); setSelectedMonth(d.getMonth() + 1); setSelectedYear(d.getFullYear()); }} className="w-10 h-10 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center transition-colors">
+                  <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                </button>
+                <span className="font-semibold text-gray-800 dark:text-gray-200">{new Date(selectedYear, selectedMonth - 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</span>
+                <button onClick={() => { const d = new Date(selectedYear, selectedMonth); setSelectedMonth(d.getMonth() + 1); setSelectedYear(d.getFullYear()); }} className="w-10 h-10 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center transition-colors">
+                  <ChevronRight className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                </button>
+              </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={[{ name: 'This Month', Income: stats.total_income || 0, Expenses: stats.total_expenses || 0 }]}>
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="Income" fill="#10b981" />
+                    <Bar dataKey="Expenses" fill="#ef4444" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-6">
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                  <p className="text-sm text-green-700 dark:text-green-400 mb-1">Total Income</p>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">₹{(stats.total_income || 0).toLocaleString('en-IN')}</p>
+                </div>
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl">
+                  <p className="text-sm text-red-700 dark:text-red-400 mb-1">Total Expenses</p>
+                  <p className="text-2xl font-bold text-red-600 dark:text-red-400">₹{(stats.total_expenses || 0).toLocaleString('en-IN')}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {tab === 'transactions' && (
           <div className="space-y-5">
             <div className="glass-card rounded-2xl p-4 shadow-lg dark:border dark:border-gray-800">
@@ -191,7 +235,8 @@ export default function Home() {
                 {transactions.length === 0 ? (
                   <div className="p-12 text-center">
                     <Receipt className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-700" />
-                    <p className="text-gray-400 dark:text-gray-600">No transactions this month</p>
+                    <p className="text-gray-400 dark:text-gray-600 mb-4">No transactions this month</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-500">Click the + or - buttons below to add</p>
                   </div>
                 ) : (
                   transactions.map(tx => (
@@ -204,7 +249,7 @@ export default function Home() {
                         </div>
                         <div className="text-right ml-4">
                           <p className={`font-bold ${tx.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                            {tx.type === 'income' ? '+' : '-'}₹{tx.amount.toLocaleString('en-IN')}
+                            {tx.type === 'income' ? '+' : '-'}₹{Number(tx.amount).toLocaleString('en-IN')}
                           </p>
                           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{new Date(tx.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</p>
                         </div>
@@ -245,7 +290,7 @@ export default function Home() {
                           <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{acc.type}</p>
                         </div>
                       </div>
-                      <p className="font-bold text-lg text-gray-800 dark:text-gray-200">₹{acc.balance.toLocaleString('en-IN')}</p>
+                      <p className="font-bold text-lg text-gray-800 dark:text-gray-200">₹{Number(acc.balance).toLocaleString('en-IN')}</p>
                     </div>
                   ))}
                 </div>
@@ -309,7 +354,7 @@ export default function Home() {
                           <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{asset.type}</p>
                         </div>
                       </div>
-                      <p className="font-bold text-lg text-gray-800 dark:text-gray-200">₹{asset.value.toLocaleString('en-IN')}</p>
+                      <p className="font-bold text-lg text-gray-800 dark:text-gray-200">₹{Number(asset.value).toLocaleString('en-IN')}</p>
                     </div>
                   ))
                 )}
@@ -342,15 +387,16 @@ export default function Home() {
         <div className="max-w-2xl mx-auto flex justify-around py-3">
           {[
             { id: 'dashboard', label: 'Dashboard', icon: HomeIcon },
-            { id: 'transactions', label: 'Transactions', icon: Receipt },
+            { id: 'chart', label: 'Chart', icon: BarChart3 },
+            { id: 'transactions', label: 'History', icon: Receipt },
             { id: 'accounts', label: 'Accounts', icon: CreditCard },
             { id: 'assets', label: 'Assets', icon: Briefcase },
           ].map(item => {
             const Icon = item.icon;
             const isActive = tab === item.id;
             return (
-              <button key={item.id} onClick={() => setTab(item.id as any)} className={`flex flex-col items-center px-5 py-2 rounded-xl transition-all ${isActive ? 'bg-primary-100 dark:bg-primary-900/30' : 'hover:bg-gray-100 dark:hover:bg-gray-800/50'}`}>
-                <Icon className={`w-6 h-6 mb-1 ${isActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}`} />
+              <button key={item.id} onClick={() => setTab(item.id as any)} className={`flex flex-col items-center px-3 py-2 rounded-xl transition-all ${isActive ? 'bg-primary-100 dark:bg-primary-900/30' : 'hover:bg-gray-100 dark:hover:bg-gray-800/50'}`}>
+                <Icon className={`w-5 h-5 mb-1 ${isActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}`} />
                 <span className={`text-xs font-medium ${isActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400'}`}>{item.label}</span>
               </button>
             );
@@ -361,8 +407,7 @@ export default function Home() {
   );
 }
 
-function SetupScreen({ onSave, onAddAccount, onComplete }: any) {
-  const [step, setStep] = useState(1);
+function SetupScreen({ step, onSave, onAddAccount, showAddAccount, setShowAddAccount, onSkip }: any) {
   const [name, setName] = useState('');
 
   return (
@@ -379,7 +424,7 @@ function SetupScreen({ onSave, onAddAccount, onComplete }: any) {
             </div>
             <div className="glass rounded-3xl p-8 space-y-6">
               <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter your name" className="w-full px-5 py-4 rounded-2xl bg-white/90 dark:bg-gray-900/90 text-gray-800 dark:text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 font-medium" />
-              <button onClick={() => { if (name) { onSave(name); setStep(2); } }} disabled={!name} className="w-full py-4 bg-white text-primary-600 rounded-2xl font-bold shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+              <button onClick={() => { if (name) onSave(name); }} disabled={!name} className="w-full py-4 bg-white text-primary-600 rounded-2xl font-bold shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all">
                 Continue
               </button>
             </div>
@@ -388,19 +433,18 @@ function SetupScreen({ onSave, onAddAccount, onComplete }: any) {
         {step === 2 && (
           <div className="text-center space-y-8">
             <h2 className="text-3xl font-bold">Add Your First Account</h2>
+            <p className="text-blue-100">Add a bank account or cash to get started</p>
             <div className="glass rounded-3xl p-8 space-y-4">
-              <button onClick={() => { const name = prompt('Account name:'); const balance = parseFloat(prompt('Balance:') || '0'); if (name) { onAddAccount(name, 'bank', balance); onComplete(); } }} className="w-full py-4 bg-white text-primary-600 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-2">
-                <Building2 className="w-5 h-5" /> Add Bank Account
+              <button onClick={() => setShowAddAccount(true)} className="w-full py-4 bg-white text-primary-600 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-2">
+                <Plus className="w-5 h-5" /> Add Account
               </button>
-              <button onClick={() => { const balance = parseFloat(prompt('Cash amount:') || '0'); onAddAccount('Cash', 'cash', balance); onComplete(); }} className="w-full py-4 bg-white text-primary-600 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-2">
-                <Wallet className="w-5 h-5" /> Add Cash
-              </button>
-              <button onClick={onComplete} className="w-full py-4 bg-white/20 backdrop-blur-xl text-white rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all">
+              <button onClick={onSkip} className="w-full py-4 bg-white/20 backdrop-blur-xl text-white rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all">
                 Skip for Now
               </button>
             </div>
           </div>
         )}
+        {showAddAccount && <AddAccountModal onAdd={(name: string, type: string, balance: number) => { onAddAccount(name, type, balance); }} onClose={() => setShowAddAccount(false)} />}
       </div>
     </div>
   );
@@ -433,7 +477,7 @@ function AddTransactionModal({ type, accounts, categories, onAdd, onClose }: any
         <div>
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">Category</label>
           <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full px-5 py-4 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl focus:outline-none focus:border-primary-500 dark:focus:border-primary-400 text-gray-800 dark:text-gray-200 font-medium transition-colors">
-            <option value="">Select category</option>
+            <option value="">Select category (optional)</option>
             {categories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
@@ -549,7 +593,7 @@ function AddCategoryModal({ onAdd, onClose }: any) {
 function AddAssetModal({ onAdd, onClose }: any) {
   const [name, setName] = useState('');
   const [value, setValue] = useState('');
-  const [type, setType] = useState('property');
+  const [type, setType] = useState('');
 
   return (
     <div onClick={onClose} className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end justify-center z-50">
@@ -563,18 +607,12 @@ function AddAssetModal({ onAdd, onClose }: any) {
 
         <div>
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">Asset Name</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., House, Gold, Stocks" className="w-full px-5 py-4 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl focus:outline-none focus:border-primary-500 text-gray-800 dark:text-gray-200 font-medium" />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., House, Gold, Stocks, Car" className="w-full px-5 py-4 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl focus:outline-none focus:border-primary-500 text-gray-800 dark:text-gray-200 font-medium" />
         </div>
 
         <div>
-          <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">Type</label>
-          <select value={type} onChange={(e) => setType(e.target.value)} className="w-full px-5 py-4 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl focus:outline-none focus:border-primary-500 text-gray-800 dark:text-gray-200 font-medium">
-            <option value="property">Property</option>
-            <option value="gold">Gold</option>
-            <option value="stocks">Stocks/Investments</option>
-            <option value="vehicle">Vehicle</option>
-            <option value="other">Other</option>
-          </select>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">Type / Category (optional)</label>
+          <input value={type} onChange={(e) => setType(e.target.value)} placeholder="e.g., Property, Investment, Vehicle" className="w-full px-5 py-4 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl focus:outline-none focus:border-primary-500 text-gray-800 dark:text-gray-200 font-medium" />
         </div>
 
         <div>
@@ -587,7 +625,7 @@ function AddAssetModal({ onAdd, onClose }: any) {
 
         <div className="flex gap-3 pt-4">
           <button onClick={onClose} className="flex-1 py-4 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-2xl font-bold">Cancel</button>
-          <button onClick={() => { if (name && value) { onAdd(name, parseFloat(value), type); onClose(); } }} disabled={!name || !value} className="flex-1 py-4 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-2xl font-bold shadow-xl disabled:opacity-50">Add Asset</button>
+          <button onClick={() => { if (name && value) { onAdd(name, parseFloat(value), type || 'other'); onClose(); } }} disabled={!name || !value} className="flex-1 py-4 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-2xl font-bold shadow-xl disabled:opacity-50">Add Asset</button>
         </div>
       </div>
     </div>
