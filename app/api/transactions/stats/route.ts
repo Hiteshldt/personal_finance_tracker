@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { sql } from '@/lib/db';
+import { db, initializeDatabase } from '@/lib/db';
 
 export async function GET(request: Request) {
   try {
+    await initializeDatabase();
     const { searchParams } = new URL(request.url);
     const month = searchParams.get('month');
     const year = searchParams.get('year');
@@ -10,56 +11,60 @@ export async function GET(request: Request) {
     let statsResult, categoryStatsResult;
 
     if (month && year) {
-      statsResult = await sql`
-        SELECT
-          COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as total_income,
-          COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as total_expenses,
-          COUNT(CASE WHEN type = 'income' THEN 1 END) as income_count,
-          COUNT(CASE WHEN type = 'expense' THEN 1 END) as expense_count
-        FROM transactions
-        WHERE EXTRACT(MONTH FROM date) = ${parseInt(month)}
-          AND EXTRACT(YEAR FROM date) = ${parseInt(year)}
-      `;
+      statsResult = await db.execute({
+        sql: `
+          SELECT
+            COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as total_income,
+            COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as total_expenses,
+            COUNT(CASE WHEN type = 'income' THEN 1 END) as income_count,
+            COUNT(CASE WHEN type = 'expense' THEN 1 END) as expense_count
+          FROM transactions
+          WHERE strftime('%m', date) = ? AND strftime('%Y', date) = ?
+        `,
+        args: [month.padStart(2, '0'), year]
+      });
 
-      categoryStatsResult = await sql`
-        SELECT c.name, COALESCE(SUM(t.amount), 0) as total, t.type
-        FROM transactions t
-        LEFT JOIN categories c ON t.category_id = c.id
-        WHERE EXTRACT(MONTH FROM t.date) = ${parseInt(month)}
-          AND EXTRACT(YEAR FROM t.date) = ${parseInt(year)}
-        GROUP BY c.name, t.type
-        ORDER BY total DESC
-      `;
+      categoryStatsResult = await db.execute({
+        sql: `
+          SELECT c.name, COALESCE(SUM(t.amount), 0) as total, t.type
+          FROM transactions t
+          LEFT JOIN categories c ON t.category_id = c.id
+          WHERE strftime('%m', t.date) = ? AND strftime('%Y', t.date) = ?
+          GROUP BY c.name, t.type
+          ORDER BY total DESC
+        `,
+        args: [month.padStart(2, '0'), year]
+      });
     } else {
-      statsResult = await sql`
+      statsResult = await db.execute(`
         SELECT
           COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as total_income,
           COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as total_expenses,
           COUNT(CASE WHEN type = 'income' THEN 1 END) as income_count,
           COUNT(CASE WHEN type = 'expense' THEN 1 END) as expense_count
         FROM transactions
-      `;
+      `);
 
-      categoryStatsResult = await sql`
+      categoryStatsResult = await db.execute(`
         SELECT c.name, COALESCE(SUM(t.amount), 0) as total, t.type
         FROM transactions t
         LEFT JOIN categories c ON t.category_id = c.id
         GROUP BY c.name, t.type
         ORDER BY total DESC
-      `;
+      `);
     }
 
     const stats = statsResult.rows[0];
     const categoryStats = categoryStatsResult.rows;
 
     return NextResponse.json({
-      total_income: parseFloat(stats?.total_income) || 0,
-      total_expenses: parseFloat(stats?.total_expenses) || 0,
-      income_count: parseInt(stats?.income_count) || 0,
-      expense_count: parseInt(stats?.expense_count) || 0,
+      total_income: Number(stats?.total_income) || 0,
+      total_expenses: Number(stats?.total_expenses) || 0,
+      income_count: Number(stats?.income_count) || 0,
+      expense_count: Number(stats?.expense_count) || 0,
       categoryStats: categoryStats.map(cat => ({
         ...cat,
-        total: parseFloat(cat.total)
+        total: Number(cat.total)
       }))
     });
   } catch (error) {

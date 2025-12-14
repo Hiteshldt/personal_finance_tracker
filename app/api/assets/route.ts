@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import { sql } from '@/lib/db';
+import { db, initializeDatabase } from '@/lib/db';
 
 export async function GET() {
   try {
-    const result = await sql`SELECT * FROM assets ORDER BY created_at DESC`;
+    await initializeDatabase();
+    const result = await db.execute('SELECT * FROM assets ORDER BY created_at DESC');
     return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Error fetching assets:', error);
@@ -13,12 +14,12 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    await initializeDatabase();
     const { name, value, type } = await request.json();
-    const result = await sql`
-      INSERT INTO assets (name, value, type)
-      VALUES (${name}, ${value}, ${type || 'other'})
-      RETURNING id, name, value, type
-    `;
+    const result = await db.execute({
+      sql: 'INSERT INTO assets (name, value, type) VALUES (?, ?, ?) RETURNING id, name, value, type',
+      args: [name, value, type || 'other']
+    });
     return NextResponse.json(result.rows[0]);
   } catch (error) {
     console.error('Error creating asset:', error);
@@ -29,11 +30,10 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const { id, name, value, type } = await request.json();
-    await sql`
-      UPDATE assets
-      SET name = ${name}, value = ${value}, type = ${type}
-      WHERE id = ${id}
-    `;
+    await db.execute({
+      sql: 'UPDATE assets SET name = ?, value = ?, type = ? WHERE id = ?',
+      args: [name, value, type, id]
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error updating asset:', error);
@@ -44,7 +44,10 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { id } = await request.json();
-    await sql`DELETE FROM assets WHERE id = ${id}`;
+    await db.execute({
+      sql: 'DELETE FROM assets WHERE id = ?',
+      args: [id]
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting asset:', error);

@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import { sql } from '@/lib/db';
+import { db, initializeDatabase } from '@/lib/db';
 
 export async function GET() {
   try {
-    const result = await sql`SELECT * FROM accounts ORDER BY created_at DESC`;
+    await initializeDatabase();
+    const result = await db.execute('SELECT * FROM accounts ORDER BY created_at DESC');
     return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Error fetching accounts:', error);
@@ -13,12 +14,12 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    await initializeDatabase();
     const { name, type, balance } = await request.json();
-    const result = await sql`
-      INSERT INTO accounts (name, type, balance)
-      VALUES (${name}, ${type}, ${balance || 0})
-      RETURNING id, name, type, balance
-    `;
+    const result = await db.execute({
+      sql: 'INSERT INTO accounts (name, type, balance) VALUES (?, ?, ?) RETURNING id, name, type, balance',
+      args: [name, type, balance || 0]
+    });
     return NextResponse.json(result.rows[0]);
   } catch (error) {
     console.error('Error creating account:', error);
@@ -29,11 +30,10 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const { id, name, type, balance } = await request.json();
-    await sql`
-      UPDATE accounts
-      SET name = ${name}, type = ${type}, balance = ${balance}
-      WHERE id = ${id}
-    `;
+    await db.execute({
+      sql: 'UPDATE accounts SET name = ?, type = ?, balance = ? WHERE id = ?',
+      args: [name, type, balance, id]
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error updating account:', error);
@@ -44,7 +44,10 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { id } = await request.json();
-    await sql`DELETE FROM accounts WHERE id = ${id}`;
+    await db.execute({
+      sql: 'DELETE FROM accounts WHERE id = ?',
+      args: [id]
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting account:', error);
