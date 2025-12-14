@@ -20,6 +20,9 @@ export default function Home() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showAddTx, setShowAddTx] = useState(false);
   const [txType, setTxType] = useState<'income' | 'expense' | 'transfer'>('expense');
+  const [showAddAccount, setShowAddAccount] = useState(false);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [showAddAsset, setShowAddAsset] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -64,6 +67,11 @@ export default function Home() {
 
   const addAsset = async (name: string, value: number, type: string) => {
     await fetch('/api/assets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, value, type }) });
+    loadData();
+  };
+
+  const addCategory = async (name: string, type: 'income' | 'expense') => {
+    await fetch('/api/categories', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, type }) });
     loadData();
   };
 
@@ -198,24 +206,52 @@ export default function Home() {
         {tab === 'accounts' && (
           <div className="space-y-4">
             <div className="bg-white rounded-xl p-4 shadow-sm space-y-3">
-              <h3 className="font-semibold">Accounts</h3>
-              {accounts.map(acc => (
-                <div key={acc.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium">{acc.name}</p>
-                    <p className="text-xs text-gray-500 capitalize">{acc.type}</p>
-                  </div>
-                  <p className="font-semibold text-lg">₹{acc.balance.toLocaleString('en-IN')}</p>
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-semibold">Accounts</h3>
+                <button onClick={() => setShowAddAccount(true)} className="text-sm text-blue-600 font-medium">+ Add</button>
+              </div>
+              {accounts.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-400 mb-4">No accounts yet</p>
+                  <button onClick={() => setShowAddAccount(true)} className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium">Add Your First Account</button>
                 </div>
-              ))}
-              <button onClick={() => {
-                const name = prompt('Account name:');
-                const type = prompt('Type (bank/cash/card):') || 'bank';
-                const balance = parseFloat(prompt('Initial balance:') || '0');
-                if (name) addAccount(name, type, balance);
-              }} className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium">
-                + Add Account
-              </button>
+              ) : (
+                accounts.map(acc => (
+                  <div key={acc.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium">{acc.name}</p>
+                      <p className="text-xs text-gray-500 capitalize">{acc.type}</p>
+                    </div>
+                    <p className="font-semibold text-lg">₹{acc.balance.toLocaleString('en-IN')}</p>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Categories Section */}
+            <div className="bg-white rounded-xl p-4 shadow-sm space-y-3">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-semibold">Categories</h3>
+                <button onClick={() => setShowAddCategory(true)} className="text-sm text-blue-600 font-medium">+ Add</button>
+              </div>
+              <div className="space-y-2">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Expense Categories</p>
+                  <div className="flex flex-wrap gap-2">
+                    {categories.filter(c => c.type === 'expense').map(cat => (
+                      <span key={cat.id} className="px-3 py-1 bg-red-50 text-red-700 rounded-full text-sm">{cat.name}</span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Income Categories</p>
+                  <div className="flex flex-wrap gap-2">
+                    {categories.filter(c => c.type === 'income').map(cat => (
+                      <span key={cat.id} className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm">{cat.name}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -223,25 +259,27 @@ export default function Home() {
         {tab === 'assets' && (
           <div className="space-y-4">
             <div className="bg-white rounded-xl p-4 shadow-sm">
-              <h3 className="font-semibold mb-3">Other Assets</h3>
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-semibold">Other Assets</h3>
+                <button onClick={() => setShowAddAsset(true)} className="text-sm text-blue-600 font-medium">+ Add</button>
+              </div>
               <div className="space-y-3">
-                {assets.map(asset => (
-                  <div key={asset.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium">{asset.name}</p>
-                      <p className="text-xs text-gray-500 capitalize">{asset.type}</p>
-                    </div>
-                    <p className="font-semibold text-lg">₹{asset.value.toLocaleString('en-IN')}</p>
+                {assets.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-400 mb-4">No assets yet</p>
+                    <button onClick={() => setShowAddAsset(true)} className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium">Add Your First Asset</button>
                   </div>
-                ))}
-                <button onClick={() => {
-                  const name = prompt('Asset name:');
-                  const value = parseFloat(prompt('Value:') || '0');
-                  const type = prompt('Type (property/gold/stocks/other):') || 'other';
-                  if (name && value) addAsset(name, value, type);
-                }} className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium">
-                  + Add Asset
-                </button>
+                ) : (
+                  assets.map(asset => (
+                    <div key={asset.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="font-medium">{asset.name}</p>
+                        <p className="text-xs text-gray-500 capitalize">{asset.type}</p>
+                      </div>
+                      <p className="font-semibold text-lg">₹{asset.value.toLocaleString('en-IN')}</p>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -264,6 +302,30 @@ export default function Home() {
           categories={categories.filter(c => c.type === txType)}
           onAdd={addTransaction}
           onClose={() => setShowAddTx(false)}
+        />
+      )}
+
+      {/* Add Account Modal */}
+      {showAddAccount && (
+        <AddAccountModal
+          onAdd={addAccount}
+          onClose={() => setShowAddAccount(false)}
+        />
+      )}
+
+      {/* Add Category Modal */}
+      {showAddCategory && (
+        <AddCategoryModal
+          onAdd={addCategory}
+          onClose={() => setShowAddCategory(false)}
+        />
+      )}
+
+      {/* Add Asset Modal */}
+      {showAddAsset && (
+        <AddAssetModal
+          onAdd={addAsset}
+          onClose={() => setShowAddAsset(false)}
         />
       )}
 
@@ -381,6 +443,134 @@ function AddTransactionModal({ type, accounts, categories, onAdd, onClose }: any
           <button onClick={handleSubmit} disabled={!amount || !accountId} className={`flex-1 py-3 rounded-lg font-semibold text-white ${type === 'income' ? 'bg-green-500' : 'bg-red-500'} disabled:opacity-50`}>
             Add {type === 'income' ? 'Income' : 'Expense'}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AddAccountModal({ onAdd, onClose }: any) {
+  const [name, setName] = useState('');
+  const [type, setType] = useState('bank');
+  const [balance, setBalance] = useState('');
+
+  const handleSubmit = () => {
+    if (!name) return;
+    onAdd(name, type, parseFloat(balance) || 0);
+    onClose();
+  };
+
+  return (
+    <div onClick={onClose} className="fixed inset-0 bg-black/50 flex items-end justify-center z-50">
+      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-t-3xl p-6 w-full max-w-2xl space-y-4">
+        <h3 className="text-xl font-bold">Add Account</h3>
+
+        <div>
+          <label className="text-sm text-gray-600 block mb-2">Account Name</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Main Bank, Cash" className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500" />
+        </div>
+
+        <div>
+          <label className="text-sm text-gray-600 block mb-2">Type</label>
+          <select value={type} onChange={(e) => setType(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500">
+            <option value="bank">Bank Account</option>
+            <option value="cash">Cash</option>
+            <option value="card">Credit Card</option>
+            <option value="wallet">Digital Wallet</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="text-sm text-gray-600 block mb-2">Current Balance</label>
+          <input type="number" value={balance} onChange={(e) => setBalance(e.target.value)} placeholder="0.00" className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-2xl font-bold focus:outline-none focus:border-blue-500" />
+        </div>
+
+        <div className="flex gap-3 pt-4">
+          <button onClick={onClose} className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold">Cancel</button>
+          <button onClick={handleSubmit} disabled={!name} className="flex-1 py-3 bg-blue-600 text-white rounded-lg font-semibold disabled:opacity-50">Add Account</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AddCategoryModal({ onAdd, onClose }: any) {
+  const [name, setName] = useState('');
+  const [type, setType] = useState<'income' | 'expense'>('expense');
+
+  const handleSubmit = () => {
+    if (!name) return;
+    onAdd(name, type);
+    onClose();
+  };
+
+  return (
+    <div onClick={onClose} className="fixed inset-0 bg-black/50 flex items-end justify-center z-50">
+      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-t-3xl p-6 w-full max-w-2xl space-y-4">
+        <h3 className="text-xl font-bold">Add Category</h3>
+
+        <div>
+          <label className="text-sm text-gray-600 block mb-2">Category Name</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Groceries, Rent" className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500" />
+        </div>
+
+        <div>
+          <label className="text-sm text-gray-600 block mb-2">Type</label>
+          <div className="flex gap-3">
+            <button onClick={() => setType('expense')} className={`flex-1 py-3 rounded-lg font-semibold ${type === 'expense' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600'}`}>Expense</button>
+            <button onClick={() => setType('income')} className={`flex-1 py-3 rounded-lg font-semibold ${type === 'income' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600'}`}>Income</button>
+          </div>
+        </div>
+
+        <div className="flex gap-3 pt-4">
+          <button onClick={onClose} className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold">Cancel</button>
+          <button onClick={handleSubmit} disabled={!name} className={`flex-1 py-3 rounded-lg font-semibold text-white ${type === 'income' ? 'bg-green-500' : 'bg-red-500'} disabled:opacity-50`}>Add Category</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AddAssetModal({ onAdd, onClose }: any) {
+  const [name, setName] = useState('');
+  const [value, setValue] = useState('');
+  const [type, setType] = useState('property');
+
+  const handleSubmit = () => {
+    if (!name || !value) return;
+    onAdd(name, parseFloat(value), type);
+    onClose();
+  };
+
+  return (
+    <div onClick={onClose} className="fixed inset-0 bg-black/50 flex items-end justify-center z-50">
+      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-t-3xl p-6 w-full max-w-2xl space-y-4">
+        <h3 className="text-xl font-bold">Add Asset</h3>
+
+        <div>
+          <label className="text-sm text-gray-600 block mb-2">Asset Name</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., House, Gold, Stocks" className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500" />
+        </div>
+
+        <div>
+          <label className="text-sm text-gray-600 block mb-2">Type</label>
+          <select value={type} onChange={(e) => setType(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500">
+            <option value="property">Property</option>
+            <option value="gold">Gold</option>
+            <option value="stocks">Stocks/Investments</option>
+            <option value="vehicle">Vehicle</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="text-sm text-gray-600 block mb-2">Current Value</label>
+          <input type="number" value={value} onChange={(e) => setValue(e.target.value)} placeholder="0.00" className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-2xl font-bold focus:outline-none focus:border-blue-500" />
+        </div>
+
+        <div className="flex gap-3 pt-4">
+          <button onClick={onClose} className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold">Cancel</button>
+          <button onClick={handleSubmit} disabled={!name || !value} className="flex-1 py-3 bg-blue-600 text-white rounded-lg font-semibold disabled:opacity-50">Add Asset</button>
         </div>
       </div>
     </div>
