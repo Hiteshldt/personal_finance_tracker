@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Wallet, TrendingUp, TrendingDown, CreditCard, Building2, Plus, Minus, Home, Receipt, Briefcase, Gem, Moon, Sun, X, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, CreditCard, Building2, Plus, Minus, Home as HomeIcon, Receipt, Briefcase, Gem, Moon, Sun, X, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
 
 type Account = { id: number; name: string; type: string; balance: number };
 type Category = { id: number; name: string; type: string };
@@ -341,7 +341,7 @@ export default function Home() {
       <div className="fixed bottom-0 left-0 right-0 glass-card border-t border-gray-200/50 dark:border-gray-800/50 safe-area-pb z-50">
         <div className="max-w-2xl mx-auto flex justify-around py-3">
           {[
-            { id: 'dashboard', label: 'Dashboard', icon: Home },
+            { id: 'dashboard', label: 'Dashboard', icon: HomeIcon },
             { id: 'transactions', label: 'Transactions', icon: Receipt },
             { id: 'accounts', label: 'Accounts', icon: CreditCard },
             { id: 'assets', label: 'Assets', icon: Briefcase },
