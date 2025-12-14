@@ -22,9 +22,10 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS categories (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
     type TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(name, type)
   );
 
   CREATE TABLE IF NOT EXISTS transactions (
@@ -55,7 +56,7 @@ db.exec(`
 // Insert default categories if none exist
 const categoryCount = db.prepare('SELECT COUNT(*) as count FROM categories').get() as { count: number };
 if (categoryCount.count === 0) {
-  const insertCategory = db.prepare('INSERT INTO categories (name, type) VALUES (?, ?)');
+  const insertCategory = db.prepare('INSERT OR IGNORE INTO categories (name, type) VALUES (?, ?)');
 
   // Expense categories
   ['Food', 'Transport', 'Shopping', 'Bills', 'Entertainment', 'Health', 'Other'].forEach(cat => {
