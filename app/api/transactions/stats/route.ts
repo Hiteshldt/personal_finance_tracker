@@ -22,7 +22,7 @@ export async function GET(request: Request) {
       COUNT(CASE WHEN type = 'expense' THEN 1 END) as expense_count
     FROM transactions
     ${whereClause}
-  `).get(...params);
+  `).get(...params) as any;
 
   const categoryStats = db.prepare(`
     SELECT c.name, SUM(t.amount) as total, t.type
@@ -33,5 +33,11 @@ export async function GET(request: Request) {
     ORDER BY total DESC
   `).all(...params);
 
-  return NextResponse.json({ ...stats, categoryStats });
+  return NextResponse.json({
+    total_income: stats?.total_income || 0,
+    total_expenses: stats?.total_expenses || 0,
+    income_count: stats?.income_count || 0,
+    expense_count: stats?.expense_count || 0,
+    categoryStats
+  });
 }
