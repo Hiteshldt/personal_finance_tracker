@@ -159,71 +159,16 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="glass-card rounded-2xl p-5 shadow-lg dark:border dark:border-green-900/30 group hover:scale-105 transition-transform">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
-                  </div>
-                  <span className="text-sm font-medium text-green-700 dark:text-green-400">Income</span>
+            {/* Total Expense Only */}
+            <div className="glass-card rounded-2xl p-6 shadow-lg dark:border dark:border-red-900/30">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                  <TrendingDown className="w-6 h-6 text-red-600 dark:text-red-400" />
                 </div>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">₹{(stats.total_income || 0).toLocaleString('en-IN')}</p>
+                <span className="text-lg font-medium text-red-700 dark:text-red-400">Total Expenses</span>
               </div>
-
-              <div className="glass-card rounded-2xl p-5 shadow-lg dark:border dark:border-red-900/30 group hover:scale-105 transition-transform">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                    <TrendingDown className="w-5 h-5 text-red-600 dark:text-red-400" />
-                  </div>
-                  <span className="text-sm font-medium text-red-700 dark:text-red-400">Expenses</span>
-                </div>
-                <p className="text-2xl font-bold text-red-600 dark:text-red-400">₹{(stats.total_expenses || 0).toLocaleString('en-IN')}</p>
-              </div>
+              <p className="text-4xl font-bold text-red-600 dark:text-red-400">₹{(stats.total_expenses || 0).toLocaleString('en-IN')}</p>
             </div>
-
-            {/* Accounts */}
-            {accounts.length > 0 && (
-              <div className="glass-card rounded-2xl p-5 shadow-lg dark:border dark:border-gray-800">
-                <div className="flex items-center gap-2 mb-4">
-                  <CreditCard className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                  <h3 className="font-semibold text-gray-800 dark:text-gray-200">Accounts</h3>
-                </div>
-                <div className="space-y-3">
-                  {accounts.map(acc => (
-                    <div key={acc.id} className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center">
-                          {acc.type === 'bank' ? <Building2 className="w-5 h-5 text-white" /> : <Wallet className="w-5 h-5 text-white" />}
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-800 dark:text-gray-200">{acc.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{acc.type}</p>
-                        </div>
-                      </div>
-                      <p className="font-bold text-gray-800 dark:text-gray-200">₹{acc.balance.toLocaleString('en-IN')}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Category Breakdown */}
-            {stats.categoryStats && stats.categoryStats.length > 0 && (
-              <div className="glass-card rounded-2xl p-5 shadow-lg dark:border dark:border-gray-800">
-                <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-4">Top Categories</h3>
-                <div className="space-y-3">
-                  {stats.categoryStats.slice(0, 5).map((cat: any, i: number) => (
-                    <div key={i} className="flex justify-between items-center">
-                      <span className="text-sm text-gray-700 dark:text-gray-300">{cat.name || 'Uncategorized'}</span>
-                      <span className={`text-sm font-semibold ${cat.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                        ₹{(cat.total || 0).toLocaleString('en-IN')}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         )}
 
