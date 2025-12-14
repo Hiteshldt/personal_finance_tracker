@@ -1,25 +1,53 @@
 import { NextResponse } from 'next/server';
-import db from '@/lib/db';
+import { sql } from '@/lib/db';
 
 export async function GET() {
-  const assets = db.prepare('SELECT * FROM assets ORDER BY created_at DESC').all();
-  return NextResponse.json(assets);
+  try {
+    const result = await sql`SELECT * FROM assets ORDER BY created_at DESC`;
+    return NextResponse.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching assets:', error);
+    return NextResponse.json([]);
+  }
 }
 
 export async function POST(request: Request) {
-  const { name, value, type } = await request.json();
-  const result = db.prepare('INSERT INTO assets (name, value, type) VALUES (?, ?, ?)').run(name, value, type || 'other');
-  return NextResponse.json({ id: result.lastInsertRowid, name, value, type });
+  try {
+    const { name, value, type } = await request.json();
+    const result = await sql`
+      INSERT INTO assets (name, value, type)
+      VALUES (${name}, ${value}, ${type || 'other'})
+      RETURNING id, name, value, type
+    `;
+    return NextResponse.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error creating asset:', error);
+    return NextResponse.json({ error: 'Failed to create asset' }, { status: 500 });
+  }
 }
 
 export async function PUT(request: Request) {
-  const { id, name, value, type } = await request.json();
-  db.prepare('UPDATE assets SET name = ?, value = ?, type = ? WHERE id = ?').run(name, value, type, id);
-  return NextResponse.json({ success: true });
+  try {
+    const { id, name, value, type } = await request.json();
+    await sql`
+      UPDATE assets
+      SET name = ${name}, value = ${value}, type = ${type}
+      WHERE id = ${id}
+    `;
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error updating asset:', error);
+    return NextResponse.json({ error: 'Failed to update asset' }, { status: 500 });
+  }
 }
 
 export async function DELETE(request: Request) {
-  const { id } = await request.json();
-  db.prepare('DELETE FROM assets WHERE id = ?').run(id);
-  return NextResponse.json({ success: true });
+  try {
+    const { id } = await request.json();
+    await sql`DELETE FROM assets WHERE id = ${id}`;
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting asset:', error);
+    return NextResponse.json({ error: 'Failed to delete asset' }, { status: 500 });
+  }
 }

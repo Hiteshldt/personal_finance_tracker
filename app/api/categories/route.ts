@@ -1,17 +1,30 @@
 import { NextResponse } from 'next/server';
-import db from '@/lib/db';
+import { sql } from '@/lib/db';
 
 export async function GET() {
-  const categories = db.prepare('SELECT * FROM categories ORDER BY type, name').all();
-  return NextResponse.json(categories);
+  try {
+    const result = await sql`SELECT * FROM categories ORDER BY type, name`;
+    return NextResponse.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    return NextResponse.json([]);
+  }
 }
 
 export async function POST(request: Request) {
-  const { name, type } = await request.json();
   try {
-    const result = db.prepare('INSERT INTO categories (name, type) VALUES (?, ?)').run(name, type);
-    return NextResponse.json({ id: result.lastInsertRowid, name, type });
-  } catch (error) {
-    return NextResponse.json({ error: 'Category already exists' }, { status: 400 });
+    const { name, type } = await request.json();
+    const result = await sql`
+      INSERT INTO categories (name, type)
+      VALUES (${name}, ${type})
+      RETURNING id, name, type
+    `;
+    return NextResponse.json(result.rows[0]);
+  } catch (error: any) {
+    console.error('Error creating category:', error);
+    if (error.message?.includes('unique') || error.message?.includes('duplicate')) {
+      return NextResponse.json({ error: 'Category already exists' }, { status: 400 });
+    }
+    return NextResponse.json({ error: 'Failed to create category' }, { status: 500 });
   }
 }

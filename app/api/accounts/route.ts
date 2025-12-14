@@ -1,25 +1,53 @@
 import { NextResponse } from 'next/server';
-import db from '@/lib/db';
+import { sql } from '@/lib/db';
 
 export async function GET() {
-  const accounts = db.prepare('SELECT * FROM accounts ORDER BY created_at DESC').all();
-  return NextResponse.json(accounts);
+  try {
+    const result = await sql`SELECT * FROM accounts ORDER BY created_at DESC`;
+    return NextResponse.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching accounts:', error);
+    return NextResponse.json([]);
+  }
 }
 
 export async function POST(request: Request) {
-  const { name, type, balance } = await request.json();
-  const result = db.prepare('INSERT INTO accounts (name, type, balance) VALUES (?, ?, ?)').run(name, type, balance || 0);
-  return NextResponse.json({ id: result.lastInsertRowid, name, type, balance: balance || 0 });
+  try {
+    const { name, type, balance } = await request.json();
+    const result = await sql`
+      INSERT INTO accounts (name, type, balance)
+      VALUES (${name}, ${type}, ${balance || 0})
+      RETURNING id, name, type, balance
+    `;
+    return NextResponse.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error creating account:', error);
+    return NextResponse.json({ error: 'Failed to create account' }, { status: 500 });
+  }
 }
 
 export async function PUT(request: Request) {
-  const { id, name, type, balance } = await request.json();
-  db.prepare('UPDATE accounts SET name = ?, type = ?, balance = ? WHERE id = ?').run(name, type, balance, id);
-  return NextResponse.json({ success: true });
+  try {
+    const { id, name, type, balance } = await request.json();
+    await sql`
+      UPDATE accounts
+      SET name = ${name}, type = ${type}, balance = ${balance}
+      WHERE id = ${id}
+    `;
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error updating account:', error);
+    return NextResponse.json({ error: 'Failed to update account' }, { status: 500 });
+  }
 }
 
 export async function DELETE(request: Request) {
-  const { id } = await request.json();
-  db.prepare('DELETE FROM accounts WHERE id = ?').run(id);
-  return NextResponse.json({ success: true });
+  try {
+    const { id } = await request.json();
+    await sql`DELETE FROM accounts WHERE id = ${id}`;
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    return NextResponse.json({ error: 'Failed to delete account' }, { status: 500 });
+  }
 }
