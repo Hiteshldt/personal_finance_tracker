@@ -513,7 +513,7 @@ function AddAccountModal({ onAdd, onClose }: any) {
 
   return (
     <div onClick={onClose} className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end justify-center z-50">
-      <div onClick={(e) => e.stopPropagation()} className="glass-card rounded-t-3xl p-6 w-full max-w-2xl space-y-5 dark:border-t dark:border-gray-800">
+      <div onClick={(e) => e.stopPropagation()} className="glass-card rounded-t-3xl p-6 w-full max-w-2xl space-y-5 max-h-[85vh] overflow-y-auto dark:border-t dark:border-gray-800">
         <div className="flex items-center justify-between">
           <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Add Account</h3>
           <button onClick={onClose} className="w-10 h-10 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center">
@@ -560,7 +560,7 @@ function AddCategoryModal({ onAdd, onClose }: any) {
 
   return (
     <div onClick={onClose} className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end justify-center z-50">
-      <div onClick={(e) => e.stopPropagation()} className="glass-card rounded-t-3xl p-6 w-full max-w-2xl space-y-5 dark:border-t dark:border-gray-800">
+      <div onClick={(e) => e.stopPropagation()} className="glass-card rounded-t-3xl p-6 w-full max-w-2xl space-y-5 max-h-[85vh] overflow-y-auto dark:border-t dark:border-gray-800">
         <div className="flex items-center justify-between">
           <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Add Category</h3>
           <button onClick={onClose} className="w-10 h-10 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center">
@@ -597,7 +597,7 @@ function AddAssetModal({ onAdd, onClose }: any) {
 
   return (
     <div onClick={onClose} className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end justify-center z-50">
-      <div onClick={(e) => e.stopPropagation()} className="glass-card rounded-t-3xl p-6 w-full max-w-2xl space-y-5 dark:border-t dark:border-gray-800">
+      <div onClick={(e) => e.stopPropagation()} className="glass-card rounded-t-3xl p-6 w-full max-w-2xl space-y-5 max-h-[85vh] overflow-y-auto dark:border-t dark:border-gray-800">
         <div className="flex items-center justify-between">
           <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Add Asset</h3>
           <button onClick={onClose} className="w-10 h-10 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center">
