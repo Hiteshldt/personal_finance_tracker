@@ -136,11 +136,11 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="glass-card rounded-3xl p-6 shadow-2xl">
+          <div className="glass-card rounded-2xl p-5 shadow-xl">
             <p className="text-sm opacity-80 mb-2">Total Net Worth</p>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold">₹{Math.floor(netWorth).toLocaleString('en-IN')}</span>
-              <span className="text-lg opacity-80">.{(netWorth % 1).toFixed(2).slice(2)}</span>
+              <span className="text-3xl font-bold">₹{Math.floor(netWorth).toLocaleString('en-IN')}</span>
+              <span className="text-base opacity-80">.{(netWorth % 1).toFixed(2).slice(2)}</span>
             </div>
           </div>
         </div>
@@ -164,22 +164,22 @@ export default function Home() {
             </div>
 
             {/* Total Expense Only */}
-            <div className="glass-card rounded-2xl p-6 shadow-lg dark:border dark:border-red-900/30">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                  <TrendingDown className="w-6 h-6 text-red-600 dark:text-red-400" />
+            <div className="glass-card rounded-2xl p-5 shadow-lg dark:border dark:border-red-900/30">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                  <TrendingDown className="w-5 h-5 text-red-600 dark:text-red-400" />
                 </div>
-                <span className="text-lg font-medium text-red-700 dark:text-red-400">Total Expenses</span>
+                <span className="text-base font-semibold text-red-700 dark:text-red-400">Total Expenses</span>
               </div>
-              <p className="text-4xl font-bold text-red-600 dark:text-red-400">₹{(stats.total_expenses || 0).toLocaleString('en-IN')}</p>
+              <p className="text-3xl font-bold text-red-600 dark:text-red-400">₹{(stats.total_expenses || 0).toLocaleString('en-IN')}</p>
             </div>
           </div>
         )}
 
         {tab === 'chart' && (
           <div className="space-y-5">
-            <div className="glass-card rounded-2xl p-6 shadow-lg dark:border dark:border-gray-800">
-              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4">Monthly Overview</h3>
+            <div className="glass-card rounded-2xl p-5 shadow-lg dark:border dark:border-gray-800">
+              <h3 className="text-base font-bold text-gray-800 dark:text-gray-200 mb-4">Monthly Overview</h3>
               <div className="flex items-center justify-between mb-4">
                 <button onClick={() => { const d = new Date(selectedYear, selectedMonth - 2); setSelectedMonth(d.getMonth() + 1); setSelectedYear(d.getFullYear()); }} className="w-10 h-10 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center transition-colors">
                   <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
@@ -202,14 +202,14 @@ export default function Home() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="grid grid-cols-2 gap-4 mt-6">
+              <div className="grid grid-cols-2 gap-3 mt-4">
                 <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
                   <p className="text-sm text-green-700 dark:text-green-400 mb-1">Total Income</p>
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">₹{(stats.total_income || 0).toLocaleString('en-IN')}</p>
+                  <p className="text-xl font-bold text-green-600 dark:text-green-400">₹{(stats.total_income || 0).toLocaleString('en-IN')}</p>
                 </div>
                 <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl">
                   <p className="text-sm text-red-700 dark:text-red-400 mb-1">Total Expenses</p>
-                  <p className="text-2xl font-bold text-red-600 dark:text-red-400">₹{(stats.total_expenses || 0).toLocaleString('en-IN')}</p>
+                  <p className="text-xl font-bold text-red-600 dark:text-red-400">₹{(stats.total_expenses || 0).toLocaleString('en-IN')}</p>
                 </div>
               </div>
             </div>
@@ -458,9 +458,9 @@ function AddTransactionModal({ type, accounts, categories, onAdd, onClose }: any
 
   return (
     <div onClick={onClose} className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end justify-center z-50 animate-fadeIn">
-      <div onClick={(e) => e.stopPropagation()} className="glass-card rounded-t-3xl p-6 w-full max-w-2xl space-y-5 max-h-[85vh] overflow-y-auto dark:border-t dark:border-gray-800 animate-slideUp">
-        <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200 capitalize">{type === 'income' ? 'Add Income' : 'Add Expense'}</h3>
+      <div onClick={(e) => e.stopPropagation()} className="glass-card rounded-t-3xl p-6 pb-8 w-full max-w-2xl space-y-4 max-h-[80vh] overflow-y-auto dark:border-t dark:border-gray-800 animate-slideUp">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 capitalize">{type === 'income' ? 'Add Income' : 'Add Expense'}</h3>
           <button onClick={onClose} className="w-10 h-10 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center transition-colors">
             <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
@@ -469,14 +469,14 @@ function AddTransactionModal({ type, accounts, categories, onAdd, onClose }: any
         <div>
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">Amount</label>
           <div className="relative">
-            <span className="absolute left-5 top-1/2 -translate-y-1/2 text-3xl font-bold text-gray-400">₹</span>
-            <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="w-full pl-14 pr-5 py-4 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl text-3xl font-bold focus:outline-none focus:border-primary-500 dark:focus:border-primary-400 text-gray-800 dark:text-gray-200 transition-colors" />
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-gray-400">₹</span>
+            <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-xl text-lg font-semibold focus:outline-none focus:border-primary-500 dark:focus:border-primary-400 text-gray-800 dark:text-gray-200 transition-colors" />
           </div>
         </div>
 
         <div>
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">Category</label>
-          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full px-5 py-4 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl focus:outline-none focus:border-primary-500 dark:focus:border-primary-400 text-gray-800 dark:text-gray-200 font-medium transition-colors">
+          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-xl focus:outline-none focus:border-primary-500 dark:focus:border-primary-400 text-gray-800 dark:text-gray-200 transition-colors">
             <option value="">Select category (optional)</option>
             {categories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
@@ -484,7 +484,7 @@ function AddTransactionModal({ type, accounts, categories, onAdd, onClose }: any
 
         <div>
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">Account</label>
-          <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className="w-full px-5 py-4 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl focus:outline-none focus:border-primary-500 dark:focus:border-primary-400 text-gray-800 dark:text-gray-200 font-medium transition-colors">
+          <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-xl focus:outline-none focus:border-primary-500 dark:focus:border-primary-400 text-gray-800 dark:text-gray-200 transition-colors">
             <option value="">Select account</option>
             {accounts.map((a: any) => <option key={a.id} value={a.id}>{a.name}</option>)}
           </select>
@@ -492,12 +492,12 @@ function AddTransactionModal({ type, accounts, categories, onAdd, onClose }: any
 
         <div>
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">Description (Optional)</label>
-          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Add a note..." className="w-full px-5 py-4 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl focus:outline-none focus:border-primary-500 dark:focus:border-primary-400 text-gray-800 dark:text-gray-200 transition-colors" />
+          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Add a note..." className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-xl focus:outline-none focus:border-primary-500 dark:focus:border-primary-400 text-gray-800 dark:text-gray-200 transition-colors" />
         </div>
 
-        <div className="flex gap-3 pt-4">
-          <button onClick={onClose} className="flex-1 py-4 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-2xl font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">Cancel</button>
-          <button onClick={() => { if (amount && accountId) { onAdd({ amount: parseFloat(amount), type, category_id: categoryId || null, account_id: accountId, description: description || null, date: new Date().toISOString() }); } }} disabled={!amount || !accountId} className={`flex-1 py-4 rounded-2xl font-bold text-white shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all ${type === 'income' ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gradient-to-r from-red-500 to-rose-600'}`}>
+        <div className="flex gap-3 pt-2 sticky bottom-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm -mx-6 px-6 py-4 border-t border-gray-200 dark:border-gray-800">
+          <button onClick={onClose} className="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">Cancel</button>
+          <button onClick={() => { if (amount && accountId) { onAdd({ amount: parseFloat(amount), type, category_id: categoryId || null, account_id: accountId, description: description || null, date: new Date().toISOString() }); } }} disabled={!amount || !accountId} className={`flex-1 py-3 rounded-xl font-semibold text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all ${type === 'income' ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gradient-to-r from-red-500 to-rose-600'}`}>
             Add {type === 'income' ? 'Income' : 'Expense'}
           </button>
         </div>
@@ -513,9 +513,9 @@ function AddAccountModal({ onAdd, onClose }: any) {
 
   return (
     <div onClick={onClose} className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end justify-center z-50">
-      <div onClick={(e) => e.stopPropagation()} className="glass-card rounded-t-3xl p-6 w-full max-w-2xl space-y-5 max-h-[85vh] overflow-y-auto dark:border-t dark:border-gray-800">
-        <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Add Account</h3>
+      <div onClick={(e) => e.stopPropagation()} className="glass-card rounded-t-3xl p-6 pb-8 w-full max-w-2xl space-y-4 max-h-[80vh] overflow-y-auto dark:border-t dark:border-gray-800">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">Add Account</h3>
           <button onClick={onClose} className="w-10 h-10 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center">
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -523,14 +523,14 @@ function AddAccountModal({ onAdd, onClose }: any) {
 
         <div>
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">Account Name</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Main Bank, Cash" className="w-full px-5 py-4 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl focus:outline-none focus:border-primary-500 text-gray-800 dark:text-gray-200 font-medium" />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Main Bank, Cash" className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-xl focus:outline-none focus:border-primary-500 text-gray-800 dark:text-gray-200" />
         </div>
 
         <div>
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">Type</label>
           <div className="grid grid-cols-2 gap-3">
             {['bank', 'cash', 'card', 'wallet'].map(t => (
-              <button key={t} onClick={() => setType(t)} className={`py-4 rounded-2xl font-semibold capitalize transition-all ${type === t ? 'bg-gradient-to-r from-primary-500 to-blue-600 text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}>
+              <button key={t} onClick={() => setType(t)} className={`py-3 rounded-xl font-semibold capitalize transition-all ${type === t ? 'bg-gradient-to-r from-primary-500 to-blue-600 text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}>
                 {t}
               </button>
             ))}
@@ -540,14 +540,14 @@ function AddAccountModal({ onAdd, onClose }: any) {
         <div>
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">Current Balance</label>
           <div className="relative">
-            <span className="absolute left-5 top-1/2 -translate-y-1/2 text-2xl font-bold text-gray-400">₹</span>
-            <input type="number" value={balance} onChange={(e) => setBalance(e.target.value)} placeholder="0.00" className="w-full pl-12 pr-5 py-4 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl text-2xl font-bold focus:outline-none focus:border-primary-500 text-gray-800 dark:text-gray-200" />
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-gray-400">₹</span>
+            <input type="number" value={balance} onChange={(e) => setBalance(e.target.value)} placeholder="0.00" className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-xl text-lg font-semibold focus:outline-none focus:border-primary-500 text-gray-800 dark:text-gray-200" />
           </div>
         </div>
 
-        <div className="flex gap-3 pt-4">
-          <button onClick={onClose} className="flex-1 py-4 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-2xl font-bold">Cancel</button>
-          <button onClick={() => { if (name) { onAdd(name, type, parseFloat(balance) || 0); onClose(); } }} disabled={!name} className="flex-1 py-4 bg-gradient-to-r from-primary-500 to-blue-600 text-white rounded-2xl font-bold shadow-xl disabled:opacity-50">Add Account</button>
+        <div className="flex gap-3 pt-2 sticky bottom-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm -mx-6 px-6 py-4 border-t border-gray-200 dark:border-gray-800">
+          <button onClick={onClose} className="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl font-semibold">Cancel</button>
+          <button onClick={() => { if (name) { onAdd(name, type, parseFloat(balance) || 0); onClose(); } }} disabled={!name} className="flex-1 py-3 bg-gradient-to-r from-primary-500 to-blue-600 text-white rounded-xl font-semibold shadow-lg disabled:opacity-50">Add Account</button>
         </div>
       </div>
     </div>
@@ -560,9 +560,9 @@ function AddCategoryModal({ onAdd, onClose }: any) {
 
   return (
     <div onClick={onClose} className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end justify-center z-50">
-      <div onClick={(e) => e.stopPropagation()} className="glass-card rounded-t-3xl p-6 w-full max-w-2xl space-y-5 max-h-[85vh] overflow-y-auto dark:border-t dark:border-gray-800">
-        <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Add Category</h3>
+      <div onClick={(e) => e.stopPropagation()} className="glass-card rounded-t-3xl p-6 pb-8 w-full max-w-2xl space-y-4 max-h-[80vh] overflow-y-auto dark:border-t dark:border-gray-800">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">Add Category</h3>
           <button onClick={onClose} className="w-10 h-10 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center">
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -570,20 +570,20 @@ function AddCategoryModal({ onAdd, onClose }: any) {
 
         <div>
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">Category Name</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Groceries, Rent" className="w-full px-5 py-4 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl focus:outline-none focus:border-primary-500 text-gray-800 dark:text-gray-200 font-medium" />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Groceries, Rent" className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-xl focus:outline-none focus:border-primary-500 text-gray-800 dark:text-gray-200" />
         </div>
 
         <div>
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">Type</label>
           <div className="flex gap-3">
-            <button onClick={() => setType('expense')} className={`flex-1 py-4 rounded-2xl font-bold transition-all ${type === 'expense' ? 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-xl' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}>Expense</button>
-            <button onClick={() => setType('income')} className={`flex-1 py-4 rounded-2xl font-bold transition-all ${type === 'income' ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-xl' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}>Income</button>
+            <button onClick={() => setType('expense')} className={`flex-1 py-3 rounded-xl font-semibold transition-all ${type === 'expense' ? 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}>Expense</button>
+            <button onClick={() => setType('income')} className={`flex-1 py-3 rounded-xl font-semibold transition-all ${type === 'income' ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}>Income</button>
           </div>
         </div>
 
-        <div className="flex gap-3 pt-4">
-          <button onClick={onClose} className="flex-1 py-4 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-2xl font-bold">Cancel</button>
-          <button onClick={() => { if (name) { onAdd(name, type); onClose(); } }} disabled={!name} className={`flex-1 py-4 rounded-2xl font-bold text-white shadow-xl disabled:opacity-50 ${type === 'income' ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gradient-to-r from-red-500 to-rose-600'}`}>Add Category</button>
+        <div className="flex gap-3 pt-2 sticky bottom-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm -mx-6 px-6 py-4 border-t border-gray-200 dark:border-gray-800">
+          <button onClick={onClose} className="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl font-semibold">Cancel</button>
+          <button onClick={() => { if (name) { onAdd(name, type); onClose(); } }} disabled={!name} className={`flex-1 py-3 rounded-xl font-semibold text-white shadow-lg disabled:opacity-50 ${type === 'income' ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gradient-to-r from-red-500 to-rose-600'}`}>Add Category</button>
         </div>
       </div>
     </div>
@@ -597,9 +597,9 @@ function AddAssetModal({ onAdd, onClose }: any) {
 
   return (
     <div onClick={onClose} className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end justify-center z-50">
-      <div onClick={(e) => e.stopPropagation()} className="glass-card rounded-t-3xl p-6 w-full max-w-2xl space-y-5 max-h-[85vh] overflow-y-auto dark:border-t dark:border-gray-800">
-        <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Add Asset</h3>
+      <div onClick={(e) => e.stopPropagation()} className="glass-card rounded-t-3xl p-6 pb-8 w-full max-w-2xl space-y-4 max-h-[80vh] overflow-y-auto dark:border-t dark:border-gray-800">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">Add Asset</h3>
           <button onClick={onClose} className="w-10 h-10 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center">
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -607,25 +607,25 @@ function AddAssetModal({ onAdd, onClose }: any) {
 
         <div>
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">Asset Name</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., House, Gold, Stocks, Car" className="w-full px-5 py-4 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl focus:outline-none focus:border-primary-500 text-gray-800 dark:text-gray-200 font-medium" />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., House, Gold, Stocks, Car" className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-xl focus:outline-none focus:border-primary-500 text-gray-800 dark:text-gray-200" />
         </div>
 
         <div>
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">Type / Category (optional)</label>
-          <input value={type} onChange={(e) => setType(e.target.value)} placeholder="e.g., Property, Investment, Vehicle" className="w-full px-5 py-4 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl focus:outline-none focus:border-primary-500 text-gray-800 dark:text-gray-200 font-medium" />
+          <input value={type} onChange={(e) => setType(e.target.value)} placeholder="e.g., Property, Investment, Vehicle" className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-xl focus:outline-none focus:border-primary-500 text-gray-800 dark:text-gray-200" />
         </div>
 
         <div>
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400 block mb-2">Current Value</label>
           <div className="relative">
-            <span className="absolute left-5 top-1/2 -translate-y-1/2 text-2xl font-bold text-gray-400">₹</span>
-            <input type="number" value={value} onChange={(e) => setValue(e.target.value)} placeholder="0.00" className="w-full pl-12 pr-5 py-4 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl text-2xl font-bold focus:outline-none focus:border-primary-500 text-gray-800 dark:text-gray-200" />
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-gray-400">₹</span>
+            <input type="number" value={value} onChange={(e) => setValue(e.target.value)} placeholder="0.00" className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-xl text-lg font-semibold focus:outline-none focus:border-primary-500 text-gray-800 dark:text-gray-200" />
           </div>
         </div>
 
-        <div className="flex gap-3 pt-4">
-          <button onClick={onClose} className="flex-1 py-4 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-2xl font-bold">Cancel</button>
-          <button onClick={() => { if (name && value) { onAdd(name, parseFloat(value), type || 'other'); onClose(); } }} disabled={!name || !value} className="flex-1 py-4 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-2xl font-bold shadow-xl disabled:opacity-50">Add Asset</button>
+        <div className="flex gap-3 pt-2 sticky bottom-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm -mx-6 px-6 py-4 border-t border-gray-200 dark:border-gray-800">
+          <button onClick={onClose} className="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl font-semibold">Cancel</button>
+          <button onClick={() => { if (name && value) { onAdd(name, parseFloat(value), type || 'other'); onClose(); } }} disabled={!name || !value} className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-xl font-semibold shadow-lg disabled:opacity-50">Add Asset</button>
         </div>
       </div>
     </div>
