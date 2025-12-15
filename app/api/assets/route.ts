@@ -1,10 +1,19 @@
 import { NextResponse } from 'next/server';
 import { db, initializeDatabase } from '@/lib/db';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await initializeDatabase();
-    const result = await db.execute('SELECT * FROM assets ORDER BY created_at DESC');
+    const userId = request.headers.get('x-user-id');
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const result = await db.execute({
+      sql: 'SELECT * FROM assets WHERE user_id = ? ORDER BY created_at DESC',
+      args: [userId]
+    });
     return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Error fetching assets:', error);
@@ -15,10 +24,16 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await initializeDatabase();
+    const userId = request.headers.get('x-user-id');
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { name, value, type } = await request.json();
     const result = await db.execute({
-      sql: 'INSERT INTO assets (name, value, type) VALUES (?, ?, ?) RETURNING id, name, value, type',
-      args: [name, value, type || 'other']
+      sql: 'INSERT INTO assets (user_id, name, value, type) VALUES (?, ?, ?, ?) RETURNING id, name, value, type',
+      args: [userId, name, value, type || 'other']
     });
     return NextResponse.json(result.rows[0]);
   } catch (error) {
@@ -29,10 +44,16 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    const userId = request.headers.get('x-user-id');
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id, name, value, type } = await request.json();
     await db.execute({
-      sql: 'UPDATE assets SET name = ?, value = ?, type = ? WHERE id = ?',
-      args: [name, value, type, id]
+      sql: 'UPDATE assets SET name = ?, value = ?, type = ? WHERE id = ? AND user_id = ?',
+      args: [name, value, type, id, userId]
     });
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -43,10 +64,16 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const userId = request.headers.get('x-user-id');
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await request.json();
     await db.execute({
-      sql: 'DELETE FROM assets WHERE id = ?',
-      args: [id]
+      sql: 'DELETE FROM assets WHERE id = ? AND user_id = ?',
+      args: [id, userId]
     });
     return NextResponse.json({ success: true });
   } catch (error) {

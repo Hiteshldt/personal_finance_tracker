@@ -1,10 +1,19 @@
 import { NextResponse } from 'next/server';
 import { db, initializeDatabase } from '@/lib/db';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await initializeDatabase();
-    const result = await db.execute('SELECT * FROM categories ORDER BY type, name');
+    const userId = request.headers.get('x-user-id');
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const result = await db.execute({
+      sql: 'SELECT * FROM categories WHERE user_id = ? ORDER BY type, name',
+      args: [userId]
+    });
     return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Error fetching categories:', error);
@@ -15,10 +24,16 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await initializeDatabase();
+    const userId = request.headers.get('x-user-id');
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { name, type } = await request.json();
     const result = await db.execute({
-      sql: 'INSERT INTO categories (name, type) VALUES (?, ?) RETURNING id, name, type',
-      args: [name, type]
+      sql: 'INSERT INTO categories (user_id, name, type) VALUES (?, ?, ?) RETURNING id, name, type',
+      args: [userId, name, type]
     });
     return NextResponse.json(result.rows[0]);
   } catch (error: any) {

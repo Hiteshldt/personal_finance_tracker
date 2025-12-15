@@ -12,11 +12,14 @@ export async function initializeDatabase() {
   if (initialized) return;
 
   try {
-    // Create tables
+    // Create tables with multi-user support
     await db.execute(`
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        pincode_hash TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -24,26 +27,31 @@ export async function initializeDatabase() {
     await db.execute(`
       CREATE TABLE IF NOT EXISTS accounts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
         name TEXT NOT NULL,
         type TEXT NOT NULL,
         balance REAL NOT NULL DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
       )
     `);
 
     await db.execute(`
       CREATE TABLE IF NOT EXISTS categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
         name TEXT NOT NULL,
         type TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(name, type)
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        UNIQUE(user_id, name, type)
       )
     `);
 
     await db.execute(`
       CREATE TABLE IF NOT EXISTS transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
         amount REAL NOT NULL,
         type TEXT NOT NULL,
         category_id INTEGER,
@@ -52,6 +60,7 @@ export async function initializeDatabase() {
         destination_account_id INTEGER,
         description TEXT,
         date DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id),
         FOREIGN KEY (category_id) REFERENCES categories(id),
         FOREIGN KEY (account_id) REFERENCES accounts(id),
         FOREIGN KEY (source_account_id) REFERENCES accounts(id),
@@ -62,35 +71,16 @@ export async function initializeDatabase() {
     await db.execute(`
       CREATE TABLE IF NOT EXISTS assets (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
         name TEXT NOT NULL,
         value REAL NOT NULL,
         type TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
       )
     `);
 
-    // Insert default categories if none exist
-    const categoryCount = await db.execute('SELECT COUNT(*) as count FROM categories');
-    const count = categoryCount.rows[0]?.count as number || 0;
-
-    if (count === 0) {
-      const expenseCategories = ['Food', 'Transport', 'Shopping', 'Bills', 'Entertainment', 'Health', 'Other'];
-      const incomeCategories = ['Salary', 'Freelance', 'Investment', 'Gift', 'Other'];
-
-      for (const cat of expenseCategories) {
-        await db.execute({
-          sql: 'INSERT OR IGNORE INTO categories (name, type) VALUES (?, ?)',
-          args: [cat, 'expense']
-        });
-      }
-
-      for (const cat of incomeCategories) {
-        await db.execute({
-          sql: 'INSERT OR IGNORE INTO categories (name, type) VALUES (?, ?)',
-          args: [cat, 'income']
-        });
-      }
-    }
+    // Note: Default categories will be added per-user during signup
 
     initialized = true;
     console.log('✅ Database initialized successfully');

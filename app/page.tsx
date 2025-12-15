@@ -1,18 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Wallet, TrendingUp, TrendingDown, CreditCard, Building2, Plus, Minus, Home as HomeIcon, Receipt, Briefcase, Gem, Moon, Sun, X, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, CreditCard, Building2, Plus, Minus, Home as HomeIcon, Receipt, Briefcase, Gem, Moon, Sun, X, ChevronLeft, ChevronRight, BarChart3, LogOut } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 type Account = { id: number; name: string; type: string; balance: number };
 type Category = { id: number; name: string; type: string };
 type Transaction = { id: number; amount: number; type: string; category_name?: string; account_name?: string; description?: string; date: string };
 type Asset = { id: number; name: string; value: number; type: string };
+type User = { id: number; name: string; username: string };
 
 export default function Home() {
+  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'pincode' | 'app'>('pincode');
+  const [user, setUser] = useState<User | null>(null);
   const [tab, setTab] = useState<'dashboard' | 'transactions' | 'accounts' | 'assets' | 'chart'>('dashboard');
-  const [user, setUser] = useState<{ name: string } | null>(null);
-  const [showSetup, setShowSetup] = useState(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -26,17 +27,25 @@ export default function Home() {
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showAddAsset, setShowAddAsset] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [setupStep, setSetupStep] = useState(1);
 
   useEffect(() => {
     const isDark = localStorage.getItem('darkMode') === 'true';
     setDarkMode(isDark);
     if (isDark) document.documentElement.classList.add('dark');
+
+    // Check for existing session
+    const savedUserId = localStorage.getItem('userId');
+    const savedUsername = localStorage.getItem('username');
+    if (savedUserId && savedUsername) {
+      setAuthMode('pincode');
+    }
   }, []);
 
   useEffect(() => {
-    loadData();
-  }, [selectedMonth, selectedYear]);
+    if (user) {
+      loadData();
+    }
+  }, [selectedMonth, selectedYear, user]);
 
   const toggleDarkMode = () => {
     const newMode = !darkMode;
@@ -49,58 +58,82 @@ export default function Home() {
     }
   };
 
-  const loadData = async () => {
-    const [userRes, accountsRes, categoriesRes, txRes, statsRes, assetsRes] = await Promise.all([
-      fetch('/api/user'),
-      fetch('/api/accounts'),
-      fetch('/api/categories'),
-      fetch(`/api/transactions?month=${selectedMonth}&year=${selectedYear}`),
-      fetch(`/api/transactions/stats?month=${selectedMonth}&year=${selectedYear}`),
-      fetch('/api/assets'),
-    ]);
-
-    const userData = await userRes.json();
-    setUser(userData);
-    setShowSetup(!userData);
-    setAccounts(await accountsRes.json());
-    setCategories(await categoriesRes.json());
-    setTransactions(await txRes.json());
-    setStats(await statsRes.json());
-    setAssets(await assetsRes.json());
+  const authenticatedFetch = async (url: string, options: RequestInit = {}) => {
+    if (!user) return null;
+    const headers = {
+      ...options.headers,
+      'x-user-id': user.id.toString(),
+      'Content-Type': 'application/json',
+    };
+    return fetch(url, { ...options, headers });
   };
 
-  const saveUser = async (name: string) => {
-    await fetch('/api/user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
-    setSetupStep(2);
+  const loadData = async () => {
+    if (!user) return;
+
+    const [accountsRes, categoriesRes, txRes, statsRes, assetsRes] = await Promise.all([
+      authenticatedFetch('/api/accounts'),
+      authenticatedFetch('/api/categories'),
+      authenticatedFetch(`/api/transactions?month=${selectedMonth}&year=${selectedYear}`),
+      authenticatedFetch(`/api/transactions/stats?month=${selectedMonth}&year=${selectedYear}`),
+      authenticatedFetch('/api/assets'),
+    ]);
+
+    if (accountsRes) setAccounts(await accountsRes.json());
+    if (categoriesRes) setCategories(await categoriesRes.json());
+    if (txRes) setTransactions(await txRes.json());
+    if (statsRes) setStats(await statsRes.json());
+    if (assetsRes) setAssets(await assetsRes.json());
+  };
+
+  const handleLogin = (userData: User) => {
+    setUser(userData);
+    localStorage.setItem('userId', userData.id.toString());
+    localStorage.setItem('username', userData.username);
+    localStorage.setItem('userName', userData.name);
+    setAuthMode('app');
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('userId');
+    localStorage.removeItem('username');
+    localStorage.removeItem('userName');
+    setAuthMode('pincode');
+    setAccounts([]);
+    setCategories([]);
+    setTransactions([]);
+    setAssets([]);
+    setStats({});
   };
 
   const addAccount = async (name: string, type: string, balance: number) => {
-    await fetch('/api/accounts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, type, balance }) });
+    await authenticatedFetch('/api/accounts', { method: 'POST', body: JSON.stringify({ name, type, balance }) });
     setShowAddAccount(false);
     loadData();
   };
 
   const addTransaction = async (data: any) => {
-    await fetch('/api/transactions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    await authenticatedFetch('/api/transactions', { method: 'POST', body: JSON.stringify(data) });
     setShowAddTx(false);
     loadData();
   };
 
   const addAsset = async (name: string, value: number, type: string) => {
-    await fetch('/api/assets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, value, type }) });
+    await authenticatedFetch('/api/assets', { method: 'POST', body: JSON.stringify({ name, value, type }) });
     setShowAddAsset(false);
     loadData();
   };
 
   const addCategory = async (name: string, type: 'income' | 'expense') => {
-    await fetch('/api/categories', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, type }) });
+    await authenticatedFetch('/api/categories', { method: 'POST', body: JSON.stringify({ name, type }) });
     setShowAddCategory(false);
     loadData();
   };
 
   const deleteTransaction = async (id: number) => {
     if (confirm('Delete this transaction?')) {
-      await fetch('/api/transactions', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+      await authenticatedFetch('/api/transactions', { method: 'DELETE', body: JSON.stringify({ id }) });
       loadData();
     }
   };
@@ -109,8 +142,17 @@ export default function Home() {
   const totalAssets = assets.reduce((sum, asset) => sum + Number(asset.value), 0);
   const netWorth = totalBalance + totalAssets;
 
-  if (showSetup) {
-    return <SetupScreen step={setupStep} onSave={saveUser} onAddAccount={(name: string, type: string, balance: number) => { addAccount(name, type, balance); setShowSetup(false); loadData(); }} showAddAccount={showAddAccount} setShowAddAccount={setShowAddAccount} onSkip={() => { setShowSetup(false); loadData(); }} />;
+  // Show auth screens if not logged in
+  if (authMode === 'signup') {
+    return <SignupScreen onSuccess={handleLogin} onSwitchToLogin={() => setAuthMode('login')} darkMode={darkMode} toggleDarkMode={toggleDarkMode} />;
+  }
+
+  if (authMode === 'login') {
+    return <LoginScreen onSuccess={handleLogin} onSwitchToSignup={() => setAuthMode('signup')} darkMode={darkMode} toggleDarkMode={toggleDarkMode} />;
+  }
+
+  if (authMode === 'pincode') {
+    return <PincodeScreen onSuccess={handleLogin} onSwitchToSignup={() => setAuthMode('signup')} onSwitchToLogin={() => setAuthMode('login')} darkMode={darkMode} toggleDarkMode={toggleDarkMode} />;
   }
 
   return (
@@ -131,9 +173,14 @@ export default function Home() {
                 <h1 className="text-xl font-bold">{user?.name || 'User'}</h1>
               </div>
             </div>
-            <button onClick={toggleDarkMode} className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xl flex items-center justify-center hover:bg-white/30 transition-all">
-              {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
+            <div className="flex gap-2">
+              <button onClick={toggleDarkMode} className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xl flex items-center justify-center hover:bg-white/30 transition-all">
+                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+              <button onClick={handleLogout} className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xl flex items-center justify-center hover:bg-white/30 transition-all">
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           <div className="glass-card rounded-2xl p-5 shadow-xl">
@@ -407,44 +454,309 @@ export default function Home() {
   );
 }
 
-function SetupScreen({ step, onSave, onAddAccount, showAddAccount, setShowAddAccount, onSkip }: any) {
+function SignupScreen({ onSuccess, onSwitchToLogin, darkMode, toggleDarkMode }: any) {
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [pincode, setPincode] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSignup = async () => {
+    if (!name || !username || !password || !pincode) {
+      setError('All fields are required');
+      return;
+    }
+
+    if (pincode.length !== 4 || !/^\d+$/.test(pincode)) {
+      setError('Pincode must be exactly 4 digits');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, username, password, pincode }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        onSuccess(data.user);
+      } else {
+        setError(data.error || 'Signup failed');
+      }
+    } catch (err) {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-600 via-blue-600 to-purple-600 dark:from-primary-900 dark:via-blue-900 dark:to-purple-900 text-white flex items-center justify-center p-6">
+      <button onClick={toggleDarkMode} className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xl flex items-center justify-center hover:bg-white/30 transition-all">
+        {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+      </button>
+
       <div className="max-w-md w-full">
-        {step === 1 && (
-          <div className="text-center space-y-8">
-            <div className="w-20 h-20 mx-auto rounded-3xl bg-white/20 backdrop-blur-xl flex items-center justify-center shadow-2xl">
-              <Wallet className="w-12 h-12" />
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold mb-2">Money Manager</h1>
-              <p className="text-blue-100">Your premium finance tracker</p>
-            </div>
-            <div className="glass rounded-3xl p-8 space-y-6">
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter your name" className="w-full px-5 py-4 rounded-2xl bg-white/90 dark:bg-gray-900/90 text-gray-800 dark:text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 font-medium" />
-              <button onClick={() => { if (name) onSave(name); }} disabled={!name} className="w-full py-4 bg-white text-primary-600 rounded-2xl font-bold shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all">
-                Continue
+        <div className="text-center space-y-8">
+          <div className="w-20 h-20 mx-auto rounded-3xl bg-white/20 backdrop-blur-xl flex items-center justify-center shadow-2xl">
+            <Wallet className="w-12 h-12" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold mb-2">Money Manager</h1>
+            <p className="text-blue-100">Create your account</p>
+          </div>
+          <div className="glass rounded-3xl p-8 space-y-4">
+            {error && <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-sm">{error}</div>}
+
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your Name"
+              className="w-full px-5 py-4 rounded-2xl bg-white/90 dark:bg-gray-900/90 text-gray-800 dark:text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 font-medium"
+            />
+
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value.toLowerCase())}
+              placeholder="Username"
+              className="w-full px-5 py-4 rounded-2xl bg-white/90 dark:bg-gray-900/90 text-gray-800 dark:text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 font-medium"
+            />
+
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="w-full px-5 py-4 rounded-2xl bg-white/90 dark:bg-gray-900/90 text-gray-800 dark:text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 font-medium"
+            />
+
+            <input
+              type="password"
+              value={pincode}
+              onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              placeholder="4-Digit Pincode"
+              maxLength={4}
+              className="w-full px-5 py-4 rounded-2xl bg-white/90 dark:bg-gray-900/90 text-gray-800 dark:text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 font-medium text-center text-2xl tracking-widest"
+            />
+
+            <button
+              onClick={handleSignup}
+              disabled={loading || !name || !username || !password || pincode.length !== 4}
+              className="w-full py-4 bg-white text-primary-600 rounded-2xl font-bold shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {loading ? 'Creating Account...' : 'Sign Up'}
+            </button>
+
+            <button onClick={onSwitchToLogin} className="w-full py-4 bg-white/20 backdrop-blur-xl text-white rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all">
+              Already have an account? Login
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LoginScreen({ onSuccess, onSwitchToSignup, darkMode, toggleDarkMode }: any) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    if (!username || !password) {
+      setError('Username and password are required');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        onSuccess(data.user);
+      } else {
+        setError(data.error || 'Login failed');
+      }
+    } catch (err) {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-primary-600 via-blue-600 to-purple-600 dark:from-primary-900 dark:via-blue-900 dark:to-purple-900 text-white flex items-center justify-center p-6">
+      <button onClick={toggleDarkMode} className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xl flex items-center justify-center hover:bg-white/30 transition-all">
+        {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+      </button>
+
+      <div className="max-w-md w-full">
+        <div className="text-center space-y-8">
+          <div className="w-20 h-20 mx-auto rounded-3xl bg-white/20 backdrop-blur-xl flex items-center justify-center shadow-2xl">
+            <Wallet className="w-12 h-12" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold mb-2">Welcome Back</h1>
+            <p className="text-blue-100">Login to your account</p>
+          </div>
+          <div className="glass rounded-3xl p-8 space-y-4">
+            {error && <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-sm">{error}</div>}
+
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value.toLowerCase())}
+              placeholder="Username"
+              className="w-full px-5 py-4 rounded-2xl bg-white/90 dark:bg-gray-900/90 text-gray-800 dark:text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 font-medium"
+            />
+
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+              className="w-full px-5 py-4 rounded-2xl bg-white/90 dark:bg-gray-900/90 text-gray-800 dark:text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 font-medium"
+            />
+
+            <button
+              onClick={handleLogin}
+              disabled={loading || !username || !password}
+              className="w-full py-4 bg-white text-primary-600 rounded-2xl font-bold shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {loading ? 'Logging in...' : 'Login'}
+            </button>
+
+            <button onClick={onSwitchToSignup} className="w-full py-4 bg-white/20 backdrop-blur-xl text-white rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all">
+              Don't have an account? Sign Up
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PincodeScreen({ onSuccess, onSwitchToSignup, onSwitchToLogin, darkMode, toggleDarkMode }: any) {
+  const [pincode, setPincode] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [savedUsername, setSavedUsername] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setSavedUsername(localStorage.getItem('username'));
+    }
+  }, []);
+
+  const handlePincodeLogin = async () => {
+    if (pincode.length !== 4) {
+      setError('Pincode must be 4 digits');
+      return;
+    }
+
+    if (!savedUsername) {
+      setError('No saved account found');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/auth/pincode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: savedUsername, pincode }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        onSuccess(data.user);
+      } else {
+        setError(data.error || 'Invalid pincode');
+        setPincode('');
+      }
+    } catch (err) {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-primary-600 via-blue-600 to-purple-600 dark:from-primary-900 dark:via-blue-900 dark:to-purple-900 text-white flex items-center justify-center p-6">
+      <button onClick={toggleDarkMode} className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xl flex items-center justify-center hover:bg-white/30 transition-all">
+        {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+      </button>
+
+      <div className="max-w-md w-full">
+        <div className="text-center space-y-8">
+          <div className="w-20 h-20 mx-auto rounded-3xl bg-white/20 backdrop-blur-xl flex items-center justify-center shadow-2xl">
+            <Wallet className="w-12 h-12" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold mb-2">Money Manager</h1>
+            {savedUsername ? (
+              <p className="text-blue-100">Welcome back, @{savedUsername}</p>
+            ) : (
+              <p className="text-blue-100">Enter your pincode</p>
+            )}
+          </div>
+          <div className="glass rounded-3xl p-8 space-y-4">
+            {error && <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-sm">{error}</div>}
+
+            <input
+              type="password"
+              value={pincode}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                setPincode(value);
+                if (value.length === 4) {
+                  // Auto-submit when 4 digits entered
+                  setTimeout(() => handlePincodeLogin(), 100);
+                }
+              }}
+              placeholder="Enter 4-digit pincode"
+              maxLength={4}
+              autoFocus
+              className="w-full px-5 py-6 rounded-2xl bg-white/90 dark:bg-gray-900/90 text-gray-800 dark:text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 font-bold text-center text-3xl tracking-widest"
+            />
+
+            <button
+              onClick={handlePincodeLogin}
+              disabled={loading || pincode.length !== 4}
+              className="w-full py-4 bg-white text-primary-600 rounded-2xl font-bold shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {loading ? 'Verifying...' : 'Unlock'}
+            </button>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button onClick={onSwitchToLogin} className="py-3 bg-white/20 backdrop-blur-xl text-white rounded-xl font-medium text-sm shadow-xl hover:shadow-2xl transition-all">
+                Full Login
+              </button>
+              <button onClick={onSwitchToSignup} className="py-3 bg-white/20 backdrop-blur-xl text-white rounded-xl font-medium text-sm shadow-xl hover:shadow-2xl transition-all">
+                Sign Up
               </button>
             </div>
           </div>
-        )}
-        {step === 2 && (
-          <div className="text-center space-y-8">
-            <h2 className="text-3xl font-bold">Add Your First Account</h2>
-            <p className="text-blue-100">Add a bank account or cash to get started</p>
-            <div className="glass rounded-3xl p-8 space-y-4">
-              <button onClick={() => setShowAddAccount(true)} className="w-full py-4 bg-white text-primary-600 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-2">
-                <Plus className="w-5 h-5" /> Add Account
-              </button>
-              <button onClick={onSkip} className="w-full py-4 bg-white/20 backdrop-blur-xl text-white rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all">
-                Skip for Now
-              </button>
-            </div>
-          </div>
-        )}
-        {showAddAccount && <AddAccountModal onAdd={(name: string, type: string, balance: number) => { onAddAccount(name, type, balance); }} onClose={() => setShowAddAccount(false)} />}
+        </div>
       </div>
     </div>
   );
